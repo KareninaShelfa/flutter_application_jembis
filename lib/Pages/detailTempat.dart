@@ -25,6 +25,11 @@ class _DetailTempatState extends State<DetailTempat> {
   int jumlahSuka = 0;
   List<String> likedPlaceIds = [];
   bool isLiked = false;
+  bool isSaved = false;
+  dynamic namaTempat;
+  dynamic alamatTempat;
+  dynamic deskripsiTempat;
+  dynamic gambar1;
 
   String comment = '';
   File? imageFile;
@@ -40,14 +45,21 @@ class _DetailTempatState extends State<DetailTempat> {
     initializeDateFormatting('id_ID', null);
     fetchLikedPlaceIds();
     jumlahSuka = widget.place['jumlahSuka'] ?? 0;
+    try{
+      print("TRY ${widget.place['disimpan']}");
+      isSaved = widget.place['disimpan'] ?? false;
+    } catch (e) {
+      print("FAILED BECAUSE ${e}");
+      isSaved = false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final namaTempat = widget.place["namaTempat"];
-    final alamatTempat = widget.place["alamatTempat"];
-    final deskripsiTempat = widget.place["deskripsiTempat"];
-    final gambar1 = widget.place["gambar1"];
+    namaTempat = widget.place["namaTempat"];
+     alamatTempat = widget.place["alamatTempat"];
+     deskripsiTempat = widget.place["deskripsiTempat"];
+     gambar1 = widget.place["gambar1"];
 
     return Scaffold(
       appBar: AppBar(
@@ -64,10 +76,26 @@ class _DetailTempatState extends State<DetailTempat> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '$namaTempat',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$namaTempat',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: addToSaved,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            color: isSaved ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -540,6 +568,26 @@ class _DetailTempatState extends State<DetailTempat> {
       comment = '';
       imageFile = null;
     });
+  }
+
+  void addToSaved() async {
+    if (isSaved){
+      FirebaseService.tempatWisata.doc(widget.place.id).update({
+        "disimpan": false,
+      }).then((value) {
+        setState(() {
+          isSaved = false;
+        });
+      });
+    } else {
+      FirebaseService.tempatWisata.doc(widget.place.id).update({
+        "disimpan": true,
+      }).then((value) {
+        setState(() {
+          isSaved = true;
+        });
+      });
+    }
   }
 
   void editComment(DocumentSnapshot comment) async {
